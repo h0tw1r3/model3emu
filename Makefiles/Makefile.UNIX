@@ -56,8 +56,8 @@ LD = gcc
 # SDL
 #
 
-SDL2_CFLAGS = `sdl2-config --cflags`
-SDL2_LIBS = `sdl2-config --libs`
+SDL2_CFLAGS = `$(TOOLCHAIN)sdl2-config --cflags`
+SDL2_LIBS = `$(TOOLCHAIN)sdl2-config --libs`
 
 #
 #	UNIX-specific

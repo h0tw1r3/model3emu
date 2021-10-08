@@ -81,8 +81,8 @@ endif
 #
 # SDL2
 #
-SDL2_LIBS =  -lmingw32 -lSDL2main -lSDL2 -Wl,--no-undefined -lshell32 -lsetupapi -ladvapi32 -luuid -lversion -limm32 -lwinmm -lgdi32 -luser32 -lm -pipe
-SDL2_CFLAGS =
+SDL2_LIBS = `$(TOOLCHAIN)sdl2-config --libs`
+SDL2_CFLAGS = `$(TOOLCHAIN)sdl2-config --cflags`
 ifeq ($(strip $(NET_BOARD)),1)
 	SDL2_LIBS += -lSDL2_net -liphlpapi
 endif

@@ -240,7 +240,7 @@ version: set_version
 $(BIN_DIR)/$(OUTFILE):	$(BIN_DIR) $(OBJ_DIR) $(OBJ_FILES)
 	$(info --------------------------------------------------------------------------------)
 	$(info Linking Supermodel     : $(BIN_DIR)/$(OUTFILE))
-	$(SILENT)$(LD) $(OBJ_FILES) $(LDFLAGS)
+	$(SILENT)$(TOOLCHAIN)$(LD) $(OBJ_FILES) $(LDFLAGS)
 	$(info --------------------------------------------------------------------------------)
 
 $(BIN_DIR):
@@ -276,15 +276,15 @@ VPATH = $(INCLUDE_DIRS)
 #
 $(OBJ_DIR)/%.o:	%.cpp
 	$(info Generating dependencies: $< -> $(OBJ_DIR)/$(*F).d)
-	$(SILENT)$(CXX) -MM -MP -MT $(OBJ_DIR)/$(*F).o -MT $(OBJ_DIR)/$(*F).d $(CXXFLAGS) $< > $(OBJ_DIR)/$(*F).d
+	$(SILENT)$(TOOLCHAIN)$(CXX) -MM -MP -MT $(OBJ_DIR)/$(*F).o -MT $(OBJ_DIR)/$(*F).d $(CXXFLAGS) $< > $(OBJ_DIR)/$(*F).d
 	$(info Compiling              : $< -> $@)
-	$(SILENT)$(CXX) $(CXXFLAGS) $< -o $@
+	$(SILENT)$(TOOLCHAIN)$(CXX) $(CXXFLAGS) $< -o $@
 
 $(OBJ_DIR)/%.o:	%.c
 	$(info Generating dependencies: $< -> $(OBJ_DIR)/$(*F).d)
-	$(SILENT)$(CC) -MM -MP -MT $(OBJ_DIR)/$(*F).o -MT $(OBJ_DIR)/$(*F).d $(CFLAGS) $< > $(OBJ_DIR)/$(*F).d
+	$(SILENT)$(TOOLCHAIN)$(CC) -MM -MP -MT $(OBJ_DIR)/$(*F).o -MT $(OBJ_DIR)/$(*F).d $(CFLAGS) $< > $(OBJ_DIR)/$(*F).d
 	$(info Compiling              : $< -> $@)
-	$(SILENT)$(CC) $(CFLAGS) $< -o $@
+	$(SILENT)$(TOOLCHAIN)$(CC) $(CFLAGS) $< -o $@
 
 
 #
@@ -313,20 +313,20 @@ $(OBJ_DIR)/m68kops.h $(OBJ_DIR)/m68kops.c $(OBJ_DIR)/m68kopac.c $(OBJ_DIR)/m68ko
 
 $(OBJ_DIR)/m68kcpu.o:	Src/CPU/68K/Musashi/m68kcpu.c $(OBJ_DIR)/m68kops.h Src/CPU/68K/Musashi/m68k.h Src/CPU/68K/Musashi/m68kconf.h
 	$(info Compiling              : $< -> $@)
-	@$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $(OBJ_DIR)/m68kcpu.o
+	@$(TOOLCHAIN)$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $(OBJ_DIR)/m68kcpu.o
 
 $(OBJ_DIR)/m68kops.o:	$(OBJ_DIR)/m68kops.c $(OBJ_DIR)/m68kops.h Src/CPU/68K/Musashi/m68k.h Src/CPU/68K/Musashi/m68kconf.h $(MUSASHI_OUTFILE)
 	$(info Compiling              : $< -> $@)
-	@$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
+	@$(TOOLCHAIN)$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
 
 $(OBJ_DIR)/m68kopac.o: $(OBJ_DIR)/m68kopac.c $(OBJ_DIR)/m68kops.h Src/CPU/68K/Musashi/m68k.h Src/CPU/68K/Musashi/m68kconf.h $(MUSASHI_OUTFILE)
 	$(info Compiling              : $< -> $@)
-	@$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
+	@$(TOOLCHAIN)$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
 
 $(OBJ_DIR)/m68kopdm.o: $(OBJ_DIR)/m68kopdm.c $(OBJ_DIR)/m68kops.h Src/CPU/68K/Musashi/m68k.h Src/CPU/68K/Musashi/m68kconf.h $(MUSASHI_OUTFILE)
 	$(info Compiling              : $< -> $@)
-	@$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
+	@$(TOOLCHAIN)$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
 
 $(OBJ_DIR)/m68kopnz.o: $(OBJ_DIR)/m68kopnz.c $(OBJ_DIR)/m68kops.h Src/CPU/68K/Musashi/m68k.h Src/CPU/68K/Musashi/m68kconf.h $(MUSASHI_OUTFILE)
 	$(info Compiling              : $< -> $@)
-	@$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
+	@$(TOOLCHAIN)$(CC) $< $(CFLAGS) $(MUSASHI_CFLAGS) -o $@
