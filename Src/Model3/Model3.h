@@ -78,8 +78,8 @@ public:
   void SaveNVRAM(CBlockFile *NVRAM);
   void LoadNVRAM(CBlockFile *NVRAM);
   void ClearNVRAM(void);
-  void RunFrame(void);
-  void RenderFrame(void);
+  void RunFrame(bool displayFrame);
+  void RenderFrame(bool displayFrame);
   void Reset(void);
   const Game &GetGame(void) const;
   void AttachRenderers(CRender2D *Render2DPtr, IRender3D *Render3DPtr);

@@ -101,14 +101,14 @@ public:
    *
    * Runs one video frame.
    */
-  virtual void RunFrame(void) = 0;
+  virtual void RunFrame(bool displayFrame) = 0;
 
   /*
    * RenderFrame(void):
    *
    * Renders one video frame.
    */
-  virtual void RenderFrame(void) = 0;
+  virtual void RenderFrame(bool displayFrame) = 0;
 
   /*
    * Reset(void):

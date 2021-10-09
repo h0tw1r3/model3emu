@@ -64,20 +64,22 @@ public:
   {
   }
 
-  void RunFrame(void) override
+  void RunFrame(bool displayFrame) override
   {
-    RenderFrame();
+    RenderFrame(displayFrame);
   }
 
-  void RenderFrame(void) override
+  void RenderFrame(bool displayFrame) override
   {
-    BeginFrameVideo();
-    m_tileGen.BeginFrame();
-    m_real3D.BeginFrame();
-    m_real3D.RenderFrame();
-    m_real3D.EndFrame();
-    m_tileGen.EndFrame();
-    EndFrameVideo();
+    if (displayFrame) {
+      BeginFrameVideo();
+      m_tileGen.BeginFrame();
+      m_real3D.BeginFrame();
+      m_real3D.RenderFrame();
+      m_real3D.EndFrame();
+      m_tileGen.EndFrame();
+      EndFrameVideo();
+    }
   }
 
   void Reset(void) override

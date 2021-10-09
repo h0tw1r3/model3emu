@@ -839,12 +839,17 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
 {
 #endif // SUPERMODEL_DEBUGGER
   std::string initialState = s_runtime_config["InitStateFile"].ValueAs<std::string>();
+  unsigned    fastStartTicks = s_runtime_config["FastStart"].ValueAs<unsigned>();
   unsigned    prevFPSTicks;
   unsigned    fpsFramesElapsed;
   bool        gameHasLightguns = false;
   bool        quit = false;
   bool        paused = false;
   bool        dumpTimings = false;
+  bool        fastStart = (fastStartTicks > 0);
+
+  if (fastStart)
+    SDL_GL_SetSwapInterval(0);
 
   // Initialize and load ROMs
   if (OKAY != Model3->Init())
@@ -939,9 +944,9 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
 
     // Render if paused, otherwise run a frame
     if (paused)
-      Model3->RenderFrame();
+      Model3->RenderFrame(!fastStart);
     else
-      Model3->RunFrame();
+      Model3->RunFrame(!fastStart);
 
     // Poll the inputs
     if (!Inputs->Poll(&game, xOffset, yOffset, xRes, yRes))
@@ -1211,14 +1216,22 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
       ++fpsFramesElapsed;
       if((currentFPSTicks-prevFPSTicks) >= 1000)  // update FPS every 1 second (each tick is 1 ms)
       {
-        sprintf(titleStr, "%s - %1.1f FPS%s", baseTitleStr, (float)fpsFramesElapsed/((float)(currentFPSTicks-prevFPSTicks)/1000.0f), paused ? " (Paused)" : "");
+        sprintf(titleStr, "%s - %1.1f FPS%s%s", baseTitleStr, (float)fpsFramesElapsed/((float)(currentFPSTicks-prevFPSTicks)/1000.0f), paused ? " (Paused)" : "", fastStart ? " (Fast start)" : "");
         SDL_SetWindowTitle(s_window, titleStr);
         prevFPSTicks = currentFPSTicks;     // reset tick count
         fpsFramesElapsed = 0;         // reset frame count
       }
     }
 
-    if (paused || s_runtime_config["Throttle"].ValueAs<bool>())
+    if (fastStart) {
+      if (currentFPSTicks > fastStartTicks) {
+        // Set vsync
+        SDL_GL_SetSwapInterval(s_runtime_config["VSync"].ValueAsDefault<bool>(false) ? 1 : 0);
+        fastStart = false;
+      }
+    }
+
+    if (paused || (!fastStart && s_runtime_config["Throttle"].ValueAs<bool>()))
     {
         UINT32 endTime    = SDL_GetTicks();
         UINT32 diff     = endTime - startTime;
@@ -1367,6 +1380,7 @@ static Util::Config::Node DefaultConfig()
   Util::Config::Node config("Global");
   config.Set("GameXMLFile", s_gameXMLFilePath);
   config.Set("InitStateFile", "");
+  config.Set("FastStart", "0");
   // CModel3
   config.Set("MultiThreaded", true);
   config.Set("GPUMultiThreaded", true);
@@ -1467,6 +1481,7 @@ static void Help(void)
   puts("  -gpu-multi-threaded     Run graphics rendering in separate thread [Default]");
   puts("  -no-gpu-thread          Run graphics rendering in main thread");
   puts("  -load-state=<file>      Load save state after starting");
+  puts("  -fast-start=<ticks>     Start un-throttled for specified ticks");
   puts("");
   puts("Video Options:");
   puts("  -res=<x>,<y>            Resolution [Default: 496,384]");
@@ -1577,7 +1592,8 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-input-system",          "InputSystem"             },
     { "-outputs",               "Outputs"                 },
     { "-log-output",            "LogOutput"               },
-    { "-log-level",             "LogLevel"                }
+    { "-log-level",             "LogLevel"                },
+    { "-fast-start",            "FastStart"               }
   };
   const std::map<std::string, std::pair<std::string, bool>> bool_options
   { // -option

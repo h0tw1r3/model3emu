@@ -2003,7 +2003,7 @@ void CModel3::ClearNVRAM(void)
   EEPROM.Clear();
 }
 
-void CModel3::RunFrame(void)
+void CModel3::RunFrame(bool displayFrame)
 {
   UINT32 start = CThread::GetTicks();
 
@@ -2028,7 +2028,7 @@ void CModel3::RunFrame(void)
     }
 
     // Render frame
-    RenderFrame();
+    RenderFrame(displayFrame);
 
     // Enter notify wait critical section
     if (!notifyLock->Lock())
@@ -2073,7 +2073,7 @@ void CModel3::RunFrame(void)
     // If not multi-threaded, then just process and render a single frame for PPC main board, sound board and drive board in turn in this thread
     RunMainBoardFrame();
     SyncGPUs();
-    RenderFrame();
+    RenderFrame(displayFrame);
     RunSoundBoardFrame();
     if (DriveBoard->IsAttached())
       RunDriveBoardFrame();
@@ -2194,12 +2194,12 @@ void CModel3::SyncGPUs(void)
   timings.syncTicks = CThread::GetTicks() - start;
 }
 
-void CModel3::RenderFrame(void)
+void CModel3::RenderFrame(bool displayFrame)
 {
   UINT32 start = CThread::GetTicks();
 
   // Call OSD video callbacks
-  if (BeginFrameVideo() && gpusReady)
+  if (BeginFrameVideo() && gpusReady && displayFrame)
   {
     // Render frame
     TileGen.BeginFrame();
