@@ -898,12 +898,16 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
 {
 #endif // SUPERMODEL_DEBUGGER
   std::string initialState = s_runtime_config["InitStateFile"].ValueAs<std::string>();
+  uint64_t    fastStartFrames = s_runtime_config["FastStart"].ValueAs<uint64_t>();
   uint64_t    prevFPSTicks;
   unsigned    fpsFramesElapsed;
   bool        gameHasLightguns = false;
   bool        quit = false;
   bool        paused = false;
   bool        dumpTimings = false;
+
+  if (fastStartFrames > 0)
+    SDL_GL_SetSwapInterval(0);
 
   // Initialize and load ROMs
   if (OKAY != Model3->Init())
@@ -1280,10 +1284,16 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
 #endif // SUPERMODEL_DEBUGGER
 
     // Refresh rate (frame limiting)
-    if (paused || s_runtime_config["Throttle"].ValueAs<bool>())
+    if (paused || (fastStartFrames == 0 && s_runtime_config["Throttle"].ValueAs<bool>()))
     {
         SuperSleepUntil(nextTime);
         nextTime = SDL_GetPerformanceCounter() + perfCountPerFrame;
+    } else if (fastStartFrames > 0) {
+      fastStartFrames--;
+      if (fastStartFrames == 0) {
+        // Reset vsync
+        SDL_GL_SetSwapInterval(s_runtime_config["VSync"].ValueAsDefault<bool>(false) ? 1 : 0);
+      }
     }
 
     // Measure frame rate
@@ -1295,7 +1305,7 @@ int Supermodel(const Game &game, ROMSet *rom_set, IEmulator *Model3, CInputs *In
       if (measurementTicks >= s_perfCounterFrequency) // update FPS every 1 second (s_perfCounterFrequency is how many perf ticks in one second)
       {
         float fps = float(fpsFramesElapsed) / (float(measurementTicks) / float(s_perfCounterFrequency));
-        sprintf(titleStr, "%s - %1.3f FPS%s", baseTitleStr, fps, paused ? " (Paused)" : "");
+        sprintf(titleStr, "%s - %1.3f FPS%s%s", baseTitleStr, fps, paused ? " (Paused)" : "", (fastStartFrames > 0) ? " (Fast start)" : "");
         SDL_SetWindowTitle(s_window, titleStr);
         prevFPSTicks = currentFPSTicks;   // reset tick count
         fpsFramesElapsed = 0;             // reset frame count
@@ -1442,6 +1452,7 @@ static Util::Config::Node DefaultConfig()
   Util::Config::Node config("Global");
   config.Set("GameXMLFile", s_gameXMLFilePath);
   config.Set("InitStateFile", "");
+  config.Set("FastStart", "0");
   // CModel3
   config.Set("MultiThreaded", true);
   config.Set("GPUMultiThreaded", true);
@@ -1556,6 +1567,7 @@ static void Help(void)
   puts("  -gpu-multi-threaded     Run graphics rendering in separate thread [Default]");
   puts("  -no-gpu-thread          Run graphics rendering in main thread");
   puts("  -load-state=<file>      Load save state after starting");
+  puts("  -fast-start=<frames>    Start un-throttled for specified frames");
   puts("");
   puts("Video Options:");
   puts("  -res=<x>,<y>            Resolution [Default: 496,384]");
@@ -1681,7 +1693,8 @@ static ParsedCommandLine ParseCommandLine(int argc, char **argv)
     { "-input-system",          "InputSystem"             },
     { "-outputs",               "Outputs"                 },
     { "-log-output",            "LogOutput"               },
-    { "-log-level",             "LogLevel"                }
+    { "-log-level",             "LogLevel"                },
+    { "-fast-start",            "FastStart"               }
   };
   const std::map<std::string, std::pair<std::string, bool>> bool_options
   { // -option
