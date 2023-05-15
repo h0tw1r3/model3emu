@@ -41,6 +41,7 @@
 #include <mutex>
 #include <vector>
 
+#define MAX_LOG_LENGTH 4096
 
 /******************************************************************************
  Class Definitions
@@ -65,72 +66,9 @@ public:
     Error
   };
 
-	/*
-	 * DebugLog(fmt, ...):
-	 * DebugLog(fmt, vl):
-	 *
-	 * Prints to debug log. If DEBUG is not defined, will end up doing nothing.
-	 *
-	 * Parameters:
-	 *		fmt		printf()-style format string.
-	 *		...		Variable number of parameters, corresponding to format
-	 *				string.
-	 *		vl		Variable arguments already stored in a list.
-	 */
-	void DebugLog(const char *fmt, ...)
-	{
-		va_list vl;
-		va_start(vl, fmt);
-		DebugLog(fmt, vl);
-		va_end(vl);
-	}
-
-	virtual void DebugLog(const char *fmt, va_list vl) = 0;
-
-	/*
-	 * InfoLog(fmt, ...):
-	 * InfoLog(fmt, vl):
-	 *
-	 * Prints to error log but does not output an error to stderr. This is
-	 * useful for printing session information to the error log.
-	 *
-	 * Parameters:
-	 *		fmt		printf()-style format string.
-	 *		...		Variable number of parameters, corresponding to format
-	 *				string.
-	 *		vl		Variable arguments already stored in a list.
-	 */
-	void InfoLog(const char *fmt, ...)
-	{
-		va_list vl;
-		va_start(vl, fmt);
-		InfoLog(fmt, vl);
-		va_end(vl);
-	}
-
-	virtual void InfoLog(const char *fmt, va_list vl) = 0;
-
-	/*
-	 * ErrorLog(fmt, ...):
-	 * ErrorLog(fmt, vl):
-	 *
-	 * Prints to error log and outputs an error message to stderr.
-	 *
-	 * Parameters:
-	 *		fmt		printf()-style format string.
-	 *		...		Variable number of parameters, corresponding to format
-	 *				string.
-	 *		vl		Variable arguments already stored in a list.
-	 */
-	void ErrorLog(const char *fmt, ...)
-	{
-		va_list vl;
-		va_start(vl, fmt);
-		ErrorLog(fmt, vl);
-		va_end(vl);
-	}
-
-	virtual void ErrorLog(const char *fmt, va_list vl) = 0;
+  virtual void DebugLog(const char *message) = 0;
+  virtual void InfoLog(const char *message) = 0;
+  virtual void ErrorLog(const char *message) = 0;
 };
 
 /*
@@ -141,9 +79,9 @@ public:
 class CMultiLogger: public CLogger
 {
 public:
-  void DebugLog(const char *fmt, va_list vl);
-  void InfoLog(const char *fmt, va_list vl);
-  void ErrorLog(const char *fmt, va_list vl);
+  void DebugLog(const char *message);
+  void InfoLog(const char *message);
+  void ErrorLog(const char *message);
   CMultiLogger(std::vector<std::shared_ptr<CLogger>> loggers);
 
 private:
@@ -161,9 +99,9 @@ private:
  */
 class CConsoleErrorLogger: public CLogger
 {
-  void DebugLog(const char *fmt, va_list vl);
-  void InfoLog(const char *fmt, va_list vl);
-  void ErrorLog(const char *fmt, va_list vl);
+  void DebugLog(const char *message);
+  void InfoLog(const char *message);
+  void ErrorLog(const char *message);
 };
 
 /*
@@ -176,9 +114,9 @@ class CConsoleErrorLogger: public CLogger
 class CFileLogger: public CLogger
 {
 public:
-  void DebugLog(const char *fmt, va_list vl);
-  void InfoLog(const char *fmt, va_list vl);
-  void ErrorLog(const char *fmt, va_list vl);
+  void DebugLog(const char *message);
+  void InfoLog(const char *message);
+  void ErrorLog(const char *message);
 	CFileLogger(LogLevel level, std::vector<std::string> filenames);
   CFileLogger(LogLevel level, std::vector<std::string> filenames, std::vector<FILE *> systemFiles);
 
@@ -201,9 +139,9 @@ private:
 class CSystemLogger: public CLogger
 {
 public:
-  void DebugLog(const char *fmt, va_list vl);
-  void InfoLog(const char *fmt, va_list vl);
-  void ErrorLog(const char *fmt, va_list vl);
+  void DebugLog(const char *message);
+  void InfoLog(const char *message);
+  void ErrorLog(const char *message);
   CSystemLogger(LogLevel level);
 
 private:
