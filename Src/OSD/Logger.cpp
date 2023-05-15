@@ -49,7 +49,9 @@ void DebugLog(const char *fmt, ...)
     return;
   va_list vl;
   va_start(vl, fmt);
-  s_Logger->DebugLog(fmt, vl);
+  char message[MAX_LOG_LENGTH];
+  vsnprintf(message, sizeof message, fmt, vl);
+  s_Logger->DebugLog(message);
   va_end(vl);
 }
 
@@ -59,7 +61,9 @@ void InfoLog(const char *fmt, ...)
     return;
   va_list vl;
   va_start(vl, fmt);
-  s_Logger->InfoLog(fmt, vl);
+  char message[MAX_LOG_LENGTH];
+  vsnprintf(message, sizeof message, fmt, vl);
+  s_Logger->InfoLog(message);
   va_end(vl);
 }
 
@@ -69,7 +73,9 @@ bool ErrorLog(const char *fmt, ...)
     return FAIL;
   va_list vl;
   va_start(vl, fmt);
-  s_Logger->ErrorLog(fmt, vl);
+  char message[MAX_LOG_LENGTH];
+  vsnprintf(message, sizeof message, fmt, vl);
+  s_Logger->ErrorLog(message);
   va_end(vl);
   return FAIL;
 }
@@ -164,27 +170,27 @@ std::shared_ptr<CLogger> CreateLogger(const Util::Config::Node &config)
  * CMultiLogger
  */
 
-void CMultiLogger::DebugLog(const char *fmt, va_list vl)
+void CMultiLogger::DebugLog(const char *message)
 {
   for (auto &logger: m_loggers)
   {
-    logger->DebugLog(fmt, vl);
+    logger->DebugLog(message);
   }
 }
 
-void CMultiLogger::InfoLog(const char *fmt, va_list vl)
+void CMultiLogger::InfoLog(const char *message)
 {
   for (auto &logger: m_loggers)
   {
-    logger->InfoLog(fmt, vl);
+    logger->InfoLog(message);
   }
 }
 
-void CMultiLogger::ErrorLog(const char *fmt, va_list vl)
+void CMultiLogger::ErrorLog(const char *message)
 {
   for (auto &logger: m_loggers)
   {
-    logger->ErrorLog(fmt, vl);
+    logger->ErrorLog(message);
   }
 }
 
@@ -197,82 +203,71 @@ CMultiLogger::CMultiLogger(std::vector<std::shared_ptr<CLogger>> loggers)
  * CConsoleErrorLogger
  */
 
-void CConsoleErrorLogger::DebugLog(const char *fmt, va_list vl)
+void CConsoleErrorLogger::DebugLog(const char *message)
 {
   // To view debug-level logging on the console, use a file logger writing
   // to stdout
 }
 
-void CConsoleErrorLogger::InfoLog(const char *fmt, va_list vl)
+void CConsoleErrorLogger::InfoLog(const char *message)
 {
   // To view info-level logging on the console, use a file logger writing
   // to stdout
 }
 
-void CConsoleErrorLogger::ErrorLog(const char *fmt, va_list vl)
+void CConsoleErrorLogger::ErrorLog(const char *message)
 {
-  char  string[4096];
-  vsprintf(string, fmt, vl);
-  fprintf(stderr, "Error: %s\n", string);
+  fprintf(stderr, "Error: %s\n", message);
 }
 
 /*
  * CFileLogger
  */
 
-void CFileLogger::DebugLog(const char *fmt, va_list vl)
+void CFileLogger::DebugLog(const char *message)
 {
   if (m_logLevel > LogLevel::Debug)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Debug] %s", string1);
+  char log_message[MAX_LOG_LENGTH + 9];
+  snprintf(log_message, sizeof log_message, "[Debug] %s\n", message);
 
   // Debug logging is so copious that we don't bother to guarantee it is saved
   std::unique_lock<std::mutex> lock(m_mtx);
-  WriteToFiles(string2);
+  WriteToFiles(log_message);
 }
 
-void CFileLogger::InfoLog(const char *fmt, va_list vl)
+void CFileLogger::InfoLog(const char *message)
 {
   if (m_logLevel > LogLevel::Info)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Info]  %s\n", string1);
+  char log_message[MAX_LOG_LENGTH + 8];
+  snprintf(log_message, sizeof log_message, "[Info] %s\n", message);
 
   // Write to file, close, and reopen to ensure it was saved
   std::unique_lock<std::mutex> lock(m_mtx);
-  WriteToFiles(string2);
+  WriteToFiles(log_message);
   ReopenFiles(std::ios::app);
 }
 
-void CFileLogger::ErrorLog(const char *fmt, va_list vl)
+void CFileLogger::ErrorLog(const char *message)
 {
   if (m_logLevel > LogLevel::Error)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Error] %s\n", string1);
+  char log_message[MAX_LOG_LENGTH + 9];
+  snprintf(log_message, sizeof log_message, "[Error] %s\n", message);
 
   // Write to file, close, and reopen to ensure it was saved
   std::unique_lock<std::mutex> lock(m_mtx);
-  WriteToFiles(string2);
+  WriteToFiles(log_message);
   ReopenFiles(std::ios::app);
 }
 
@@ -328,63 +323,54 @@ CFileLogger::CFileLogger(CLogger::LogLevel level, std::vector<std::string> filen
  * CSystemLogger
  */
 
-void CSystemLogger::DebugLog(const char *fmt, va_list vl)
+void CSystemLogger::DebugLog(const char *message)
 {
   if (m_logLevel > LogLevel::Debug)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Debug] %s", string1);
+  char log_message[MAX_LOG_LENGTH + 8];
+  snprintf(log_message, sizeof log_message, "[Debug] %s", message);
 
 #ifdef _WIN32
-  OutputDebugString(string2);
+  OutputDebugString(log_message);
 #else
-  syslog(LOG_DEBUG, string2);
+  syslog(LOG_DEBUG, log_message);
 #endif
 }
 
-void CSystemLogger::InfoLog(const char *fmt, va_list vl)
+void CSystemLogger::InfoLog(const char *message)
 {
   if (m_logLevel > LogLevel::Info)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Info]  %s\n", string1);
+  char log_message[MAX_LOG_LENGTH + 8];
+  snprintf(log_message, sizeof log_message, "[Info] %s\n", message);
 
 #ifdef _WIN32
-  OutputDebugString(string2);
+  OutputDebugString(log_message);
 #else
-  syslog(LOG_INFO, string2);
+  syslog(LOG_INFO, log_message);
 #endif
 }
 
-void CSystemLogger::ErrorLog(const char *fmt, va_list vl)
+void CSystemLogger::ErrorLog(const char *message)
 {
   if (m_logLevel > LogLevel::Error)
   {
     return;
   }
 
-  char string1[4096];
-  char string2[4096];
-
-  vsprintf(string1, fmt, vl);
-  sprintf(string2, "[Error] %s\n", string1);
+  char log_message[MAX_LOG_LENGTH + 9];
+  snprintf(log_message, sizeof log_message, "[Error] %s\n", message);
 
  #ifdef _WIN32
-  OutputDebugString(string2);
+  OutputDebugString(log_message);
 #else
-  syslog(LOG_ERR, string2);
+  syslog(LOG_ERR, log_message);
 #endif
 }
 
